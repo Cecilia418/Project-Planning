@@ -1,0 +1,66 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  background: #faf7f2;
+  color: #3f3935;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 320px;
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: #faf7f2;
+  font-family: Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.lesson-checkbox:checked + .checkbox-ui {
+  border-color: #c98268;
+  background: #c98268;
+}
+
+.lesson-checkbox:checked + .checkbox-ui::after {
+  display: block;
+}
+
+.lesson-checkbox:focus-visible + .checkbox-ui {
+  outline: 3px solid rgb(201 130 104 / 28%);
+  outline-offset: 3px;
+}
+
+.checkbox-ui::after {
+  display: none;
+  width: 5px;
+  height: 9px;
+  border-right: 1.5px solid #fffdfc;
+  border-bottom: 1.5px solid #fffdfc;
+  content: "";
+  transform: translateY(-1px) rotate(45deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
