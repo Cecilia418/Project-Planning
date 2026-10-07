@@ -4,29 +4,62 @@ import { useEffect, useMemo, useState } from "react";
 import {
   allItemIds,
   DEFAULT_COMPLETED_IDS,
+  graduationStandards,
   roadmap,
   totalItems,
 } from "@/data/roadmap";
 
-const STORAGE_KEY = "minifightrl-progress-v1";
+const STORAGE_KEY = "minifightrl-progress-v2";
+const LEGACY_STORAGE_KEY = "minifightrl-progress-v1";
 const defaultProgress = Object.fromEntries(
   DEFAULT_COMPLETED_IDS.map((id) => [id, true]),
 ) as Record<string, boolean>;
 
+function parseProgress(raw: string): Record<string, unknown> | null {
+  try {
+    const saved: unknown = JSON.parse(raw);
+    if (typeof saved !== "object" || saved === null || Array.isArray(saved)) return null;
+    return saved as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
+function normalizeProgress(values: Record<string, unknown>): Record<string, boolean> {
+  return Object.fromEntries(
+    allItemIds.map((id) => [
+      id,
+      typeof values[id] === "boolean" ? values[id] : Boolean(defaultProgress[id]),
+    ]),
+  );
+}
+
 function readSavedProgress(): Record<string, boolean> {
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return defaultProgress;
-
-    const saved: unknown = JSON.parse(raw);
-    if (typeof saved !== "object" || saved === null || Array.isArray(saved)) {
-      return defaultProgress;
+    const currentRaw = window.localStorage.getItem(STORAGE_KEY);
+    if (currentRaw) {
+      const currentValues = parseProgress(currentRaw);
+      if (currentValues) return normalizeProgress(currentValues);
     }
 
-    const values = saved as Record<string, unknown>;
-    return Object.fromEntries(
-      allItemIds.map((id) => [id, typeof values[id] === "boolean" ? values[id] : Boolean(defaultProgress[id])]),
-    );
+    const legacyRaw = window.localStorage.getItem(LEGACY_STORAGE_KEY);
+    if (!legacyRaw) return defaultProgress;
+
+    const legacyValues = parseProgress(legacyRaw);
+    if (!legacyValues) return defaultProgress;
+
+    const migrated = { ...defaultProgress };
+    for (const part of roadmap) {
+      for (const item of part.items) {
+        if (item.legacyIds?.some((legacyId) => legacyValues[legacyId] === true)) {
+          migrated[item.id] = true;
+        }
+      }
+    }
+
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(migrated));
+    window.localStorage.removeItem(LEGACY_STORAGE_KEY);
+    return migrated;
   } catch {
     return defaultProgress;
   }
@@ -193,6 +226,23 @@ export default function Roadmap() {
             </section>
           );
         })}
+      </section>
+
+      <section
+        aria-labelledby="graduation-standards-title"
+        className="mt-4 rounded-[18px] border border-line bg-surface px-5 py-5 sm:mt-[18px] sm:px-7 sm:py-6"
+      >
+        <h2
+          id="graduation-standards-title"
+          className="text-[17px] font-medium leading-6 tracking-[-0.02em] text-ink sm:text-[18px]"
+        >
+          完成 MiniFightRL 后，我应该能够：
+        </h2>
+        <ul className="mt-3 space-y-2 pl-4 text-[13px] leading-[1.55] text-muted sm:text-[14px]">
+          {graduationStandards.map((standard) => (
+            <li className="list-disc marker:text-clay" key={standard}>{standard}</li>
+          ))}
+        </ul>
       </section>
 
       <footer className="pt-8 text-center text-[11px] tracking-wide text-muted/80">
